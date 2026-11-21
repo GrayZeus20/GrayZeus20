@@ -1,0 +1,20 @@
+# OS & Editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+
+# Logs & Temporary
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Environment & Local State
+.env
+.env.*
+!.env.example
+.claude/
+.gemini/
+.antigravity/
