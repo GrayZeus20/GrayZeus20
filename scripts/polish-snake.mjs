@@ -70,7 +70,8 @@ function polishSvg(filePath) {
   }
 
   let css = svg.slice(styleStart + 7, styleEnd);
-  const svgBody = svg.slice(styleEnd + 8);
+  let svgHead = svg.slice(0, styleStart + 7);
+  let svgBody = svg.slice(styleEnd + 8);
 
   // Extract original animation duration (e.g. 29500ms)
   const durMatch = css.match(/\b(\d+)ms\b/);
@@ -91,10 +92,22 @@ function polishSvg(filePath) {
   // 1. Update duration everywhere in style block
   css = css.replace(new RegExp(`\\b${origMs}ms\\b`, "g"), `${totalMs}ms`);
 
-  // 2. Transform all @keyframes blocks
+  // 2. Remove bottom progress bar elements, CSS rules, and tighten bottom viewBox
+  svgBody = svgBody.replace(/<rect[^>]*class="u\b[^"]*"[^>]*\/?>/g, "");
+  css = css.replace(/\.u(?:\.u\d+)?\{[^}]*\}/g, "");
+  svgHead = svgHead
+    .replace(/viewBox="-16 -32 880 192"/, 'viewBox="-16 -32 880 156"')
+    .replace(/height="192"/, 'height="156"');
+
+  // 3. Transform all @keyframes blocks
   css = css.replace(
     /@keyframes\s+([a-zA-Z0-9_-]+)\{((?:[^{}]|\{[^}]*\})*)\}/g,
     (fullMatch, name, body) => {
+      // Drop progress bar keyframes completely
+      if (/^u\d+$/.test(name)) {
+        return "";
+      }
+
       const stops = parseKeyframeStops(body);
       if (stops.length === 0) return fullMatch;
 
@@ -140,37 +153,17 @@ function polishSvg(filePath) {
         return `@keyframes ${name}{${rebuilt.join("")}}`;
       }
 
-      // Case C: Progress bars (u0, u1, u2, u3) -> fade out smoothly while grid fades in
-      if (/^u\d+$/.test(name)) {
-        const fadeOutEndPct = ((origMs + FADE_MS * 0.75) / totalMs) * 100;
-        const lastStop = stops[stops.length - 1];
-        const finalScaleDecl = lastStop?.decl || "transform:scale(1.000,1)";
-        const lastHas100 = lastStop?.pcts?.includes(100);
-        const rebuilt = stops.map(({ pcts, decl }) => {
-          const scaledPcts = pcts.map((p) => fmtPct(p * scale));
-          return `${scaledPcts.join(",")}{${decl};opacity:1}`;
-        });
-        rebuilt.unshift(`0%{transform:scale(0.000,1);opacity:1}`);
-        if (!lastHas100) {
-          rebuilt.push(`${fmtPct(fadeStartPct)}{${finalScaleDecl};opacity:1}`);
-        }
-        rebuilt.push(`${fmtPct(fadeOutEndPct)}{${finalScaleDecl};opacity:0}`);
-        rebuilt.push(`99.98%{transform:scale(0.000,1);opacity:0}`);
-        rebuilt.push(`100%{transform:scale(0.000,1);opacity:1}`);
-        return `@keyframes ${name}{${rebuilt.join("")}}`;
-      }
-
       return fullMatch;
     }
   );
 
-  // 3. Respect prefers-reduced-motion cleanly
-  css += `@media(prefers-reduced-motion:reduce){.c,.s,.u{animation:none!important}.s,.u{opacity:0}}`;
+  // 4. Respect prefers-reduced-motion cleanly
+  css += `@media(prefers-reduced-motion:reduce){.c,.s{animation:none!important}.s{opacity:0}}`;
 
-  const output = svg.slice(0, styleStart + 7) + css + svg.slice(styleEnd);
+  const output = svgHead + css + "</style>" + svgBody;
   fs.writeFileSync(filePath, output, "utf8");
   console.log(
-    `Polished ${filePath}: ${origMs}ms -> ${totalMs}ms (${cellNormX.size} cells, smooth wave fade-in + hold)`
+    `Polished ${filePath}: ${origMs}ms -> ${totalMs}ms (${cellNormX.size} cells, no progress bar, smooth wave fade-in + hold)`
   );
 }
 
