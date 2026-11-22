@@ -2,8 +2,22 @@ name: Generate Minimalist Contribution Snake
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    # Auto-sync commits every 15 minutes (free & unlimited on public repos)
+    - cron: "*/15 * * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/polish-snake.mjs"
+      - ".github/workflows/snake.yml"
+  repository_dispatch:
+    types:
+      - commit-pushed
   workflow_dispatch:
+
+concurrency:
+  group: contribution-snake
+  cancel-in-progress: true
 
 jobs:
   generate:
@@ -13,6 +27,9 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Generate minimalist snake SVGs (dark & light)
         uses: Platane/snk/svg-only@v3
         with:
@@ -21,7 +38,10 @@ jobs:
             dist/snake-dark.svg?palette=github-dark&color_snake=#38bdf8&color_dots=#161b22,#1e293b,#334155,#64748b,#cbd5e1
             dist/snake-light.svg?palette=github-light&color_snake=#0284c7&color_dots=#f1f5f9,#cbd5e1,#94a3b8,#475569,#0f172a
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SNK_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Apply smooth post-eat fade-in wave & showcase hold
+        run: node scripts/polish-snake.mjs dist/snake-dark.svg dist/snake-light.svg
 
       - name: Publish SVGs to output branch
         uses: crazy-max/ghaction-github-pages@v4
