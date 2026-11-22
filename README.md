@@ -28,3 +28,13 @@ Fullstack Web Developer — membangun aplikasi web modern, dari antarmuka hingga
 - [**CodeDuo**](https://github.com/GrayZeus20/CodeDuo) — Platform belajar pemrograman interaktif berbahasa Indonesia. *(JavaScript, React, CSS)*
 - [**Scanner**](https://github.com/GrayZeus20/Scanner) — Aplikasi pemindai dokumen langsung di browser secara lokal. *(JavaScript, HTML, CSS)*
 - [**RuteMu**](https://github.com/GrayZeus20/RuteMu) — Aplikasi pemantauan rute kendaraan secara *real-time*. *(JavaScript, Express, HTML, CSS)*
+
+---
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/GrayZeus20/GrayZeus20/output/snake-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/GrayZeus20/GrayZeus20/output/snake-light.svg" />
+    <img alt="Contribution Snake" src="https://raw.githubusercontent.com/GrayZeus20/GrayZeus20/output/snake-dark.svg" width="100%" />
+  </picture>
+</div>
